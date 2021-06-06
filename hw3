@@ -1,0 +1,463 @@
+#include <iostream>
+#include <sstream>
+#include "SubSeqsList.h"
+using namespace::std;
+SubSeqsList::SubSeqsList() {
+	hHead = NULL;
+}
+SubSeqHeadNode* SubSeqsList::allocHeadNode() {
+	SubSeqHeadNode* newNode = new SubSeqHeadNode;
+	newNode->next = NULL;
+	newNode->sHead = NULL;
+	newNode->size = 1;
+	return newNode;
+}
+void SubSeqsList::doCommand(int input) {
+	if (input < 0)
+	{
+		input = abs(input);
+		if (exists(input)) {
+			cout << "All subsequence(s) containing "<<input<<" has/have been deleted" << endl;
+			deleteByValue(input);
+		}
+		else {
+			cout << "There is no subsequence that contains " << input << " to be deleted" << endl;
+		}
+	}
+	else {
+		if (!exists(input)) {
+			cout << "Subsequence(s) containing "<<input<<" has/have been added"<<endl;
+			addNode(input);
+		}
+		else {
+			cout << input<<" is already in the list!" << endl;
+		}
+	}
+}
+
+void SubSeqsList::PrintList() {
+	cout <<endl<< "FINAL CONTENT" << endl;
+	if (hHead == NULL) {
+		cout << "List is empty!" << endl;
+	}
+	SubSeqHeadNode* temp = hHead;
+	while (temp != NULL)
+	{
+		SubSeqNode* tempSub = temp->sHead;
+		cout << temp->size << " | ";
+		while (tempSub != NULL)
+		{
+			cout << tempSub->value ;
+			if (tempSub->next != NULL) {
+				cout << " --> ";
+			}
+			tempSub = tempSub->next;
+		}
+		temp = temp->next;
+		cout << endl;
+	}
+}
+void SubSeqsList::addNode(int value) {
+	SubSeqHeadNode* newHeadNode = allocHeadNode();
+	if (hHead == NULL)
+	{
+		hHead = newHeadNode;
+	}
+	SubSeqHeadNode* outerTemp = hHead;
+	SubSeqNode* sNode = new SubSeqNode;
+	sNode->value = value;
+	sNode->next = NULL;
+	if (hHead->sHead == NULL)
+	{
+		hHead->sHead = sNode;
+		return;
+	}
+	newHeadNode->sHead = sNode;
+	if (isBigger(hHead, newHeadNode))
+	{
+		newHeadNode->next = hHead;
+		hHead = newHeadNode;
+	}
+	else {
+		while (outerTemp->next != NULL && isBigger(newHeadNode, outerTemp->next))
+		{
+			outerTemp = outerTemp->next;
+		}
+		insertAfter(outerTemp, newHeadNode);
+	}
+	outerTemp = hHead;
+	SubSeqHeadNode* newInnerHeadNode = NULL;
+	while (outerTemp->next != NULL)
+	{
+		SubSeqNode* innerTemp = outerTemp->sHead;
+		while (innerTemp->next != NULL)
+		{
+			innerTemp = innerTemp->next;
+		}
+		if (innerTemp->value < value) {
+			newInnerHeadNode = copyNode(outerTemp);
+			SubSeqNode* newTemp = newInnerHeadNode->sHead;
+			while (newTemp->next != NULL)
+			{
+				newTemp = newTemp->next;
+			}
+			newTemp->next = new SubSeqNode;
+			newTemp->next->value = value;
+			newTemp->next->next = NULL;
+			SubSeqHeadNode* curNode = outerTemp;
+			while (curNode->next != NULL && isBigger(newInnerHeadNode, curNode->next))
+			{
+				curNode = curNode->next;
+			}
+			insertAfter(curNode, newInnerHeadNode);
+		}
+		outerTemp = outerTemp->next;
+	}
+}
+void SubSeqsList::deleteByValue(int value) {
+	SubSeqHeadNode* cur = hHead;
+	while (cur != NULL)
+	{
+		SubSeqNode* curShead = cur->sHead;
+		bool doDelete = false;
+		while (curShead != NULL)
+		{
+			if (curShead->value == value)
+			{
+				doDelete = true;
+			}
+			curShead = curShead->next;
+		}
+		if (doDelete)
+		{
+			deleteNode(cur);
+		}
+		cur = cur->next;
+	}
+}
+void SubSeqsList::deleteNode(SubSeqHeadNode* ptr) {
+	SubSeqHeadNode* cur = hHead;
+	SubSeqHeadNode* prev = NULL;
+	while (cur != NULL && cur != ptr)
+	{
+		prev = cur;
+		cur = cur->next;
+	}
+	if (prev != NULL) {
+		prev->next = cur->next;
+		cur = prev;
+	}
+	if (cur == ptr)
+	{
+		hHead = NULL;
+	}
+}
+bool SubSeqsList::exists(int value) {
+	SubSeqHeadNode* cur = hHead;
+	while (cur != NULL)
+	{
+		SubSeqNode* curShead = cur->sHead;
+		while (curShead != NULL)
+		{
+			if (value == curShead->value)
+			{
+				return true;
+			}
+			curShead = curShead->next;
+		}
+		cur = cur->next;
+	}
+	return false;
+}
+bool SubSeqsList::isBigger(SubSeqHeadNode* ptr1, SubSeqHeadNode* ptr2) {
+	if (ptr1->size > ptr2->size)
+	{
+		return true;
+	}
+	else if (ptr1->size < ptr2->size) {
+		return false;
+	}
+	else {
+		bool check = true;
+		SubSeqNode* temp1 = ptr1->sHead;
+		SubSeqNode* temp2 = ptr2->sHead;
+		while (temp1 != NULL && temp2 != NULL)
+		{
+			if (temp1->value < temp2->value)
+			{
+				check = false;
+			}
+			temp2 = temp2->next;
+			temp1 = temp1->next;
+		}
+		return check;
+	}
+}
+SubSeqHeadNode* SubSeqsList::copyNode(SubSeqHeadNode* node) {
+	SubSeqHeadNode* clone = new SubSeqHeadNode;
+	SubSeqHeadNode* current = node;
+	clone->size = current->size + 1;
+	clone->next = NULL;
+	clone->sHead = copySubSeqNode(current->sHead);
+	return clone;
+}
+SubSeqNode* SubSeqsList::copySubSeqNode(SubSeqNode* sHead) {
+	SubSeqNode* current = sHead;
+	SubSeqNode* copy = new SubSeqNode;
+	copy->value = current->value;
+	copy->next = NULL;
+	SubSeqNode* const head = copy;
+	current = current->next;
+	while (current != NULL) {
+		copy = copy->next = new SubSeqNode;
+		copy->value = current->value;
+		copy->next = NULL;
+		current = current->next;
+	}
+	return head;
+}
+void SubSeqsList::insertAfter(SubSeqHeadNode* prev_node, SubSeqHeadNode* new_node)
+{
+	new_node->next = prev_node->next;
+	prev_node->next = new_node;
+}#include <iostream>
+#include <sstream>
+#include "SubSeqsList.h"
+using namespace::std;
+SubSeqsList::SubSeqsList() {
+	hHead = NULL;
+}
+SubSeqHeadNode* SubSeqsList::allocHeadNode() {
+	SubSeqHeadNode* newNode = new SubSeqHeadNode;
+	newNode->next = NULL;
+	newNode->sHead = NULL;
+	newNode->size = 1;
+	return newNode;
+}
+void SubSeqsList::doCommand(int input) {
+	if (input < 0)
+	{
+		input = abs(input);
+		if (exists(input)) {
+			cout << "All subsequence(s) containing "<<input<<" has/have been deleted" << endl;
+			deleteByValue(input);
+		}
+		else {
+			cout << "There is no subsequence that contains " << input << " to be deleted" << endl;
+		}
+	}
+	else {
+		if (!exists(input)) {
+			cout << "Subsequence(s) containing "<<input<<" has/have been added"<<endl;
+			addNode(input);
+		}
+		else {
+			cout << input<<" is already in the list!" << endl;
+		}
+	}
+}
+
+void SubSeqsList::PrintList() {
+	cout <<endl<< "FINAL CONTENT" << endl;
+	if (hHead == NULL) {
+		cout << "List is empty!" << endl;
+	}
+	SubSeqHeadNode* temp = hHead;
+	while (temp != NULL)
+	{
+		SubSeqNode* tempSub = temp->sHead;
+		cout << temp->size << " | ";
+		while (tempSub != NULL)
+		{
+			cout << tempSub->value ;
+			if (tempSub->next != NULL) {
+				cout << " --> ";
+			}
+			tempSub = tempSub->next;
+		}
+		temp = temp->next;
+		cout << endl;
+	}
+}
+void SubSeqsList::addNode(int value) {
+	SubSeqHeadNode* newHeadNode = allocHeadNode();
+	if (hHead == NULL)
+	{
+		hHead = newHeadNode;
+	}
+	SubSeqHeadNode* outerTemp = hHead;
+	SubSeqNode* sNode = new SubSeqNode;
+	sNode->value = value;
+	sNode->next = NULL;
+	if (hHead->sHead == NULL)
+	{
+		hHead->sHead = sNode;
+		return;
+	}
+	newHeadNode->sHead = sNode;
+	if (isBigger(hHead, newHeadNode))
+	{
+		newHeadNode->next = hHead;
+		hHead = newHeadNode;
+	}
+	else {
+		while (outerTemp->next != NULL && isBigger(newHeadNode, outerTemp->next))
+		{
+			outerTemp = outerTemp->next;
+		}
+		insertAfter(outerTemp, newHeadNode);
+	}
+	outerTemp = hHead;
+	SubSeqHeadNode* newInnerHeadNode = NULL;
+	while (outerTemp->next != NULL)
+	{
+		SubSeqNode* innerTemp = outerTemp->sHead;
+		while (innerTemp->next != NULL)
+		{
+			innerTemp = innerTemp->next;
+		}
+		if (innerTemp->value < value) {
+			newInnerHeadNode = copyNode(outerTemp);
+			SubSeqNode* newTemp = newInnerHeadNode->sHead;
+			while (newTemp->next != NULL)
+			{
+				newTemp = newTemp->next;
+			}
+			newTemp->next = new SubSeqNode;
+			newTemp->next->value = value;
+			newTemp->next->next = NULL;
+			SubSeqHeadNode* curNode = outerTemp;
+			while (curNode->next != NULL && isBigger(newInnerHeadNode, curNode->next))
+			{
+				curNode = curNode->next;
+			}
+			insertAfter(curNode, newInnerHeadNode);
+		}
+		outerTemp = outerTemp->next;
+	}
+}
+void SubSeqsList::deleteByValue(int value) {
+	SubSeqHeadNode* cur = hHead;
+	while (cur != NULL)
+	{
+		SubSeqNode* curShead = cur->sHead;
+		bool doDelete = false;
+		while (curShead != NULL)
+		{
+			if (curShead->value == value)
+			{
+				doDelete = true;
+			}
+			curShead = curShead->next;
+		}
+		if (doDelete)
+		{
+			deleteNode(cur);
+		}
+		cur = cur->next;
+	}
+}
+void SubSeqsList::deleteNode(SubSeqHeadNode* ptr) {
+	SubSeqHeadNode* cur = hHead;
+	SubSeqHeadNode* prev = NULL;
+	while (cur != NULL && cur != ptr)
+	{
+		prev = cur;
+		cur = cur->next;
+	}
+	if (prev != NULL) {
+		prev->next = cur->next;
+		cur = prev;
+	}
+	if (cur == ptr)
+	{
+		hHead = NULL;
+	}
+}
+bool SubSeqsList::exists(int value) {
+	SubSeqHeadNode* cur = hHead;
+	while (cur != NULL)
+	{
+		SubSeqNode* curShead = cur->sHead;
+		while (curShead != NULL)
+		{
+			if (value == curShead->value)
+			{
+				return true;
+			}
+			curShead = curShead->next;
+		}
+		cur = cur->next;
+	}
+	return false;
+}
+bool SubSeqsList::isBigger(SubSeqHeadNode* ptr1, SubSeqHeadNode* ptr2) {
+	if (ptr1->size > ptr2->size)
+	{
+		return true;
+	}
+	else if (ptr1->size < ptr2->size) {
+		return false;
+	}
+	else {
+		bool check = true;
+		SubSeqNode* temp1 = ptr1->sHead;
+		SubSeqNode* temp2 = ptr2->sHead;
+		while (temp1 != NULL && temp2 != NULL)
+		{
+			if (temp1->value < temp2->value)
+			{
+				check = false;
+			}
+			temp2 = temp2->next;
+			temp1 = temp1->next;
+		}
+		return check;
+	}
+}
+SubSeqHeadNode* SubSeqsList::copyNode(SubSeqHeadNode* node) {
+	SubSeqHeadNode* clone = new SubSeqHeadNode;
+	SubSeqHeadNode* current = node;
+	clone->size = current->size + 1;
+	clone->next = NULL;
+	clone->sHead = copySubSeqNode(current->sHead);
+	return clone;
+}
+SubSeqNode* SubSeqsList::copySubSeqNode(SubSeqNode* sHead) {
+	SubSeqNode* current = sHead;
+	SubSeqNode* copy = new SubSeqNode;
+	copy->value = current->value;
+	copy->next = NULL;
+	SubSeqNode* const head = copy;
+	current = current->next;
+	while (current != NULL) {
+		copy = copy->next = new SubSeqNode;
+		copy->value = current->value;
+		copy->next = NULL;
+		current = current->next;
+	}
+	return head;
+}
+void SubSeqsList::insertAfter(SubSeqHeadNode* prev_node, SubSeqHeadNode* new_node)
+{
+	new_node->next = prev_node->next;
+	prev_node->next = new_node;
+}
+#include <iostream>
+#include <sstream>
+#include "SubSeqsList.h"
+using namespace::std;
+int main()
+{
+	string numbers;
+	cout << "Please enter the numbers in a line: ";
+	getline(cin, numbers);
+	cout << endl;
+	istringstream iss(numbers);
+	int num;
+	SubSeqsList list;
+	while (iss >> num) {
+		list.doCommand(num);
+	}
+	list.PrintList();
+}
