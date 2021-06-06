@@ -1,0 +1,291 @@
+#include <iostream>
+#include <stdlib.h>
+using namespace std;
+
+typedef struct money{
+  string currency;
+  double amount;
+}Money;
+
+class Wallet{
+  private:
+	  Money *currencies;
+	  int size;
+  public:
+  Wallet(){
+    size=0;
+    currencies=NULL;
+  }
+  Wallet(const Wallet &other){
+    size = other.size;
+    currencies = new Money[size];
+    for(int i=0;i<size;i++){
+      currencies[i].currency = other.currencies[i].currency;
+      currencies[i].amount = other.currencies[i].amount;
+    }
+  }
+  ~Wallet(){
+  }
+  int getSize(){
+    return size;
+  }
+  void setSize(int size){
+    this->size=size;
+  }
+  int curExists(const Money &currency) const{
+  	for(int i=0;i<size;i++){
+  		if(currency.currency==currencies[i].currency){
+  			return i;
+		  }
+	  }
+	  return -1;
+  }
+  Money getCurrency(int pos){
+  	return currencies[pos];
+  }
+
+  Wallet &operator+(const Money &other)const {
+  	Wallet res;
+  	int pos = curExists(other);
+  	if(pos==-1){
+  	    res.setSize(size+1);
+  	    res.currencies = new Money[res.getSize()];
+  	    for(int i=0;i<size;i++){
+  	        res.currencies[i].currency = currencies[i].amount;
+  	        res.currencies[i].amount=currencies[i].amount;
+  	    }
+  	    res.currencies[size].currency= other.currency;
+        res.currencies[size].amount= other.amount;
+  	}
+  	else{
+  	    res = *this;
+  	    res.currencies[pos].amount+=other.amount;
+  	}
+	return res;
+  }
+   Wallet operator + (const Wallet &other) const {
+  	Wallet res;
+    int same=0;
+    for(int i=0;i<size;i++){
+    	for(int j=0;j<other.size;j++){
+    		if(currencies[i].currency==other.currencies[j].currency){
+    			same++;
+    			break;
+			}
+		}
+	}
+	res.size = same+(size-same)+(other.size-same);
+	res.currencies = new Money[res.size];
+	int pos=size;
+	for(int i=0;i<size;i++){
+		res.currencies[i].currency = currencies[i].currency;
+		res.currencies[i].amount = currencies[i].amount;
+	}
+	for(int i=0;i<other.size;i++){
+		int tmp = res.curExists(other.currencies[i]);
+		if(tmp==-1){
+			res.currencies[pos].currency=other.currencies[i].currency;
+			res.currencies[pos].amount=other.currencies[i].amount;
+		}
+		else{
+			res.currencies[tmp].amount+=other.currencies[i].amount;
+		}
+	}
+    return res;
+  }
+    Wallet operator - (const Money &other) const {
+  	Wallet res = *this;
+  	int pos = res.curExists(other);
+  	if(pos!=-1){
+  		if(other.amount<=res.currencies[pos].amount){
+  			res.currencies[pos].amount-=other.amount;
+		}
+		if(res.currencies[pos].amount==0){
+		    res.size--;
+		    for (int j=pos; j<res.size; j++){
+		    	res.currencies[j] = res.currencies[j+1];
+			}
+		}
+		res.currencies = (Money*)realloc(res.currencies,sizeof(Money)*res.size);
+	}
+	return res;
+  }
+  Wallet operator = (const Wallet &other){
+  	Wallet res = other;
+  	return res;
+  }
+	bool operator == ( Wallet &other) {
+   		if(size!=other.size)
+   			return false;
+		   for(int i=0;i<size;i++){
+		   		int pos =other.curExists(currencies[i]);
+				   if(pos==-1){
+		   			return false;
+					}
+					else if(currencies[i].amount!=other.currencies[pos].amount){
+						return false;
+					}
+		   }
+	  return true;
+  }
+  Wallet operator += (const Wallet &other){
+  	Wallet res = *this;
+  	res = res + other;
+  	return res;
+  }
+  bool operator >= (const Money &other){
+	int pos =curExists(other);
+	if(pos==-1){
+		return false;
+	}
+	else if(currencies[pos].amount>=other.amount){
+		return true;
+	}
+	else return false;
+  }
+};
+bool operator <= (const Money &m,Wallet &w){
+	int pos = w.curExists(m);
+	if(pos==-1){
+		return false;
+	}
+	else{
+		if(m.amount<=w.getCurrency(pos).amount){
+			return true;
+		}
+		else return false;
+	}
+}
+ostream& operator<<(ostream& os,Wallet w)
+{
+  os<<w.getSize()<<endl;
+  for(int i=0;i<w.getSize();i++){
+    os<<w.getCurrency(i).currency<<" "<<w.getCurrency(i).amount<<" - ";
+  }
+  os<<endl;
+  return os;
+} 
+// Add #includes here
+using namespace std;
+
+//This program does not perform something meaningful. It just uses the operators and class that you will implement.
+//Do not change anything other than adding include(s) above.
+
+void display(const Wallet& w)
+{
+	cout << w << "\n\n";
+}
+
+Wallet readWallet()
+{
+	Wallet res;
+	Money t;
+	cout << "Please enter the name of the currency and amount to put it to myWallet3 (to stop enter ctrl+z on an empty line):\n";
+	while (cin >> t.currency >> t.amount)
+	{
+		res = res + t;
+		cout << "Please enter the name of the currency and amount to put it to myWallet3 (to stop enter ctrl+z on an empty line):\n";
+	}
+	cout << "\n";
+	cin.clear();
+
+	return res;
+}
+
+void foo(const Wallet & w)//if you receive no operator matches ... errors in this function, read the life-saving advice in the homework document
+{
+	Money t;
+	t.currency = "USD"; t.amount = 33.2;
+	Wallet localWallet = w + w;
+	localWallet = w + t;
+	localWallet = w - t;
+}
+
+int main()
+{
+	Wallet myWallet;
+	Money t;
+	cout << "Please enter the name of the currency and amount to put it to myWallet (to stop enter ctrl+z on an empty line):\n";
+	while (cin >> t.currency >> t.amount)
+	{
+		myWallet = myWallet + t;
+		cout << "Please enter the name of the currency and amount to put it to myWallet (to stop enter ctrl+z on an empty line):\n";
+	}
+
+	cin.clear();
+	myWallet = myWallet;
+	cout << "\nCurrent myWallet after input and self assignment:\n";
+	display(myWallet);
+	foo(myWallet);
+
+	Wallet myWallet2(myWallet);
+	cout << "Current myWallet2 after copy constructor:\n";
+	display(myWallet2);
+	
+
+	cout << "What do you want to spend from myWallet?: "; 
+	cin >> t.currency >> t.amount;
+	myWallet = myWallet - t; 
+
+	cout << "\nCurrent myWallet after spending:\n";
+	cout << myWallet << "\n\n";;
+	cout << "Current myWallet2 after spending:\n";
+	cout << myWallet2 << "\n\n";;
+
+	if (myWallet == myWallet2)
+		cout << "myWallet and myWallet2 are exactly the same\n";
+	else
+		cout << "myWallet and myWallet2 are not the same\n";
+
+	Wallet myWallet3;
+	cout << "\nEmpty myWallet3:\n";
+	cout << myWallet3 << "\n";;
+
+	myWallet3 = readWallet();
+
+	cout << "Current myWallet3 after reading:\n";
+	cout << myWallet3 << "\n\n";;
+
+	if (myWallet == myWallet3)
+		cout << "myWallet and myWallet3 are exactly the same\n";
+	else
+		cout << "myWallet and myWallet3 are not the same\n";
+	cout << "\n";
+
+	t.currency = "HBAR";
+	t.amount = 251;
+
+	if (myWallet >= t) 
+		cout << "myWallet has more than 250 HBAR\n";
+	else
+		cout << "myWallet does not have more than 250 HBAR\n";
+	
+	if (t <= myWallet3)
+		cout << "myWallet3 has more than 250 HBAR\n";
+	else
+		cout << "myWallet3 does not have more than 250 HBAR\n";
+
+	myWallet3 = myWallet3 + myWallet;
+
+	cout << "\nCurrent myWallet3 after myWallet3 = myWallet3 + myWallet:\n";
+	cout << myWallet3 << "\n\n";;
+
+	Wallet myWallet4;
+	myWallet4 = myWallet4 + myWallet4;
+	myWallet4 += myWallet4;
+	myWallet4 = myWallet + myWallet2 + myWallet3;
+
+	cout << "Current myWallet4 after myWallet4 = myWallet + myWallet2 + myWallet3:\n";
+	cout << myWallet4 << "\n\n";;
+
+	myWallet = myWallet2 = myWallet3 += myWallet2;
+	cout << "After myWallet = myWallet2 = myWallet3 += myWallet2";
+	cout << "\nCurrent myWallet:\n";
+	cout << myWallet << "\n\n";;
+	cout << "Current myWallet2:\n";
+	cout << myWallet2 << "\n\n";;
+	cout << "Current myWallet3:\n";
+	cout << myWallet3 << "\n";;
+
+	return 0;
+}
