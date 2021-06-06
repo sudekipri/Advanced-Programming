@@ -1,2 +1,2 @@
-# CS204
-mini projects programmed with C++
+# CS-204
+Advanced Programming Course - Projects Programmed with C++
