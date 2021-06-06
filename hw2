@@ -1,0 +1,121 @@
+
+#include <iostream>
+#include <sstream>
+#include "strutils.h";
+using namespace::std;
+struct node
+{
+	int value;
+	node* next;
+	node(int val)
+		: value(val), next(NULL)
+	{}
+};
+
+void DisplayList(node* head)
+{
+	node* ptr = head;
+	while (ptr != NULL)
+	{
+		cout << ptr->value << " ";
+		ptr = ptr->next;
+	}
+	cout << endl;
+}
+bool list_contains(node* head, int num) {
+	node* temp = head;
+	while (temp != NULL) {
+		if (temp->value == num)return true;
+		temp = temp->next;
+	}
+	return false;
+}
+node* add(node* head, int num, string order) {
+	node* newNode = new node(num);
+	node* ptr = head;
+	node* deleted = NULL;
+	bool contains = list_contains(head, num);
+	if (head == NULL) {
+		head = newNode;
+	}
+	else if(contains==false) {
+		node* prev = NULL;
+		if (order == "D") {
+			while (ptr != NULL && ptr->value > newNode->value) {
+				prev = ptr;
+				ptr = ptr->next;
+			}
+			deleted = ptr;
+			if (prev == NULL) {
+				head = newNode;
+			}
+			else {
+				prev->next = newNode;
+			}
+		}
+		else {
+			while (ptr != NULL && ptr->value < newNode->value) {
+				prev = ptr;
+				ptr = ptr->next;
+			}
+			deleted = ptr;
+			if (prev == NULL) {
+				head = newNode;
+			}
+			else {
+				prev->next = newNode;
+			}
+		}
+	}
+	if (contains) {
+		cout << num << " is already in the list!" << endl;
+	}
+	else {
+		cout << "Deleted nodes: ";
+		if (deleted != NULL) {
+			DisplayList(deleted);
+		}
+		else {
+			cout << "None" << endl;
+		}
+		cout << "Appended: " << newNode->value << endl;
+	}
+	cout << "List content: ";
+	DisplayList(head);
+	cout << endl;
+	return head;
+}
+int main()
+{
+	string order, numbers;
+	cout << "Please enter the order mode (A/D): ";
+	while (true) {
+		cin >> order;
+		if (!cin.fail() && (order == "A" || order == "D")) {
+			break;
+		}
+		else {
+			cout << "Please enter the order mode again (A/D): ";
+			cin.ignore(numeric_limits<streamsize>::max(), '\n');
+		}
+	}
+	cin.ignore(numeric_limits<streamsize>::max(), '\n');
+	cout << "Please enter the numbers in a line: ";
+	getline(cin, numbers);
+	cout << endl;
+	istringstream iss(numbers);
+	int num;
+	node* head = NULL;
+	while (iss >> num) {
+		cout << "Next number: " << num << endl;
+		head = add(head, num, order);
+	}
+	if (head == NULL) {
+		cout << "The list is empty at the end of the program and nothing is deleted" << endl;
+	}
+	else {
+		cout << "All the nodes are deleted at the end of the program: ";
+		DisplayList(head);
+		free(head);
+	}
+}
